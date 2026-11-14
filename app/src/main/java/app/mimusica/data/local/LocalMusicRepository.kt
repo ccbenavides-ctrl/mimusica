@@ -140,13 +140,24 @@ class LocalMusicRepository(
     }
 
     private fun scan(minDurationMs: Long): List<Track> {
+        // La columna de género existe desde Android 11; si algún teléfono no la tiene, se escanea sin ella.
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+            try {
+                return scanWith(minDurationMs, hasGenre = true)
+            } catch (e: SecurityException) {
+                throw e
+            } catch (_: Exception) {
+            }
+        }
+        return scanWith(minDurationMs, hasGenre = false)
+    }
+
+    private fun scanWith(minDurationMs: Long, hasGenre: Boolean): List<Track> {
         val collection: Uri = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
             MediaStore.Audio.Media.getContentUri(MediaStore.VOLUME_EXTERNAL)
         } else {
             MediaStore.Audio.Media.EXTERNAL_CONTENT_URI
         }
-        // La columna de género existe desde Android 11.
-        val hasGenre = Build.VERSION.SDK_INT >= Build.VERSION_CODES.R
         val projection = listOfNotNull(
             MediaStore.Audio.Media._ID,
             MediaStore.Audio.Media.TITLE,

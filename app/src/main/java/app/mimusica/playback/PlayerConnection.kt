@@ -38,7 +38,7 @@ data class PlayerState(
  */
 class PlayerConnection(
     private val context: Context,
-    private val extras: PlaybackExtras,
+    @Suppress("unused") private val extras: PlaybackExtras,
     private val resolveUri: (Track) -> String,
 ) {
     private val _state = MutableStateFlow(PlayerState())
@@ -158,6 +158,7 @@ class PlayerConnection(
     fun playQueueItem(index: Int) = withController { c ->
         if (index in 0 until c.mediaItemCount) {
             c.seekToDefaultPosition(index)
+            if (c.playbackState == Player.STATE_IDLE) c.prepare()
             c.play()
         }
     }

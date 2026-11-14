@@ -322,7 +322,8 @@ fun AutoPlaylistScreen(autoId: String, onBack: () -> Unit) {
     val auto = AutoPlaylist.fromId(autoId) ?: AutoPlaylist.FAVORITES
     val flow: Flow<List<Track>> = remember(auto) {
         when (auto) {
-            AutoPlaylist.FAVORITES -> container.library.favorites
+            // Las emisoras guardadas tienen su propia sección en Radio en vivo.
+            AutoPlaylist.FAVORITES -> container.library.favorites.map { list -> list.filter { !it.isLive } }
             AutoPlaylist.RECENT -> container.library.recent()
             AutoPlaylist.MOST_PLAYED -> container.library.mostPlayed()
             AutoPlaylist.RECENTLY_ADDED -> container.localMusic.state.map { s ->

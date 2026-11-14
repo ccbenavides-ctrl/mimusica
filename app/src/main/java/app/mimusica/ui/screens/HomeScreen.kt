@@ -104,6 +104,11 @@ fun HomeScreen(
                 }
             }
 
+            if (!lib.hasPermission) {
+                // Primera vez: pedir permiso para leer la música del teléfono.
+                item { PermissionScreen() }
+            }
+
             if (lib.tracks.isNotEmpty()) {
                 item {
                     Row(Modifier.padding(horizontal = 16.dp, vertical = 4.dp)) {

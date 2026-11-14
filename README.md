@@ -6,6 +6,35 @@ Reproductor de música personal para Android. Une en una sola app:
 - **Música nueva gratuita y legal**: streaming y descarga desde **Internet Archive** (sin clave) y **Jamendo** (clave gratuita).
 - **Tus playlists de Spotify como lista de nombres**: se importan (CSV o texto) y se cruzan con lo que ya tienes.
 
+### Novedades de la versión 2.0
+
+**Reproductor**
+- Recuerda la cola y el punto exacto donde ibas al cerrar la app.
+- Caché de streaming: lo que ya oíste por internet no se vuelve a descargar (Ajustes › Sonido y reproducción).
+- Temporizador de apagado (ícono de luna en «Reproduciendo»), velocidad de reproducción y letras sincronizadas (LRCLIB).
+- Ecualizador con los preajustes del teléfono, refuerzo de graves, igualar volumen (ReplayGain) y fundido entre canciones.
+- Cola y listas se reordenan arrastrando el asa (≡).
+
+**Contenido**
+- Pestaña **Inicio**: sigue escuchando, mezclas automáticas, agregado recientemente y lo más oído.
+- **Radio en vivo**: miles de emisoras de todo el mundo (directorio abierto Radio Browser). Corazón = guardar en «Mis emisoras».
+- **Podcasts**: búsqueda, suscripción, descarga de episodios y reanudación donde quedaste.
+- **Radio de esta canción** (menú ⋮): cola de canciones parecidas de tu biblioteca.
+- **Tu resumen**: canciones y artistas más escuchados del mes, del año o de siempre.
+
+**Teléfono y carro**
+- **Android Auto**: la app aparece como fuente de música. Al ser una app instalada por fuera de Google Play, hay que
+  activar en el teléfono *Android Auto › Ajustes › (tocar 10 veces «Versión») › Ajustes de desarrollador › Fuentes desconocidas*.
+- **Widget** para la pantalla de inicio (mantén pulsada la pantalla › Widgets › MiMúsica).
+- **Editar datos y carátula** de una canción (menú ⋮). Se guarda dentro de la app; el archivo no se modifica.
+  Las carátulas que falten se buscan solas en MusicBrainz / Cover Art Archive.
+- **Copia de seguridad** de listas, favoritos, historial y podcasts (Ajustes › Copia de seguridad).
+- **Chromecast (experimental)**: se activa en Ajustes y se aplica al reabrir la app. Solo transmite música por internet
+  (radio, podcasts, Internet Archive, Jamendo), no los archivos guardados en el teléfono.
+
+Límites conocidos: el fundido baja y sube el volumen entre canciones, pero no las superpone; igualar volumen solo actúa
+en archivos que traen la etiqueta ReplayGain.
+
 Reproduce en segundo plano con notificación, controles en la pantalla de bloqueo y botones de audífonos Bluetooth.
 Tiene listas de reproducción, favoritos, historial, cola editable, aleatorio y repetir.
 

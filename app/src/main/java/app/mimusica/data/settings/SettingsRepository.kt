@@ -103,7 +103,7 @@ class SettingsRepository(private val context: Context) {
     }
 
     /** Lectura síncrona (solo al crear el servicio de reproducción). */
-    fun current(): AppSettings = runBlocking { settings.first() }
+    fun current(): AppSettings = runCatching { runBlocking { settings.first() } }.getOrDefault(AppSettings())
 
     suspend fun setJamendoClientId(value: String) {
         context.settingsDataStore.edit { it[Keys.jamendo] = value.trim() }

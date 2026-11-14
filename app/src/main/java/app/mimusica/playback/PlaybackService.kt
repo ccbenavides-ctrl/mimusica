@@ -457,6 +457,7 @@ class PlaybackService : MediaLibraryService() {
         }
 
         /** Reanudar desde Bluetooth o el botón de reproducir del sistema cuando la app estaba cerrada. */
+        @Deprecated("Media3 mantiene esta variante; se sobrescribe para la reanudación")
         override fun onPlaybackResumption(
             mediaSession: MediaSession,
             controller: MediaSession.ControllerInfo,
