@@ -2,7 +2,7 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools">
 
-    <!-- Red: streaming y descargas de Internet Archive / Jamendo -->
+    <!-- Red: streaming y descargas (Internet Archive, Jamendo, radio en vivo, podcasts) -->
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
 
@@ -33,6 +33,7 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.MiMusica"
         android:requestLegacyExternalStorage="true"
+        android:usesCleartextTraffic="true"
         tools:targetApi="37">
 
         <activity
@@ -52,9 +53,46 @@
             android:exported="true"
             android:foregroundServiceType="mediaPlayback">
             <intent-filter>
+                <action android:name="androidx.media3.session.MediaLibraryService" />
                 <action android:name="androidx.media3.session.MediaSessionService" />
+                <action android:name="android.media.browse.MediaBrowserService" />
             </intent-filter>
         </service>
+
+        <!-- Botones multimedia (Bluetooth, widget): Media3 los entrega al servicio y lo arranca si hace falta -->
+        <receiver
+            android:name="androidx.media3.session.MediaButtonReceiver"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.MEDIA_BUTTON" />
+            </intent-filter>
+        </receiver>
+
+        <!-- Widget de la pantalla de inicio -->
+        <receiver
+            android:name=".widget.PlayerWidget"
+            android:exported="false"
+            android:label="@string/app_name">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/player_widget_info" />
+        </receiver>
+
+        <!-- Android Auto: la app aparece como fuente de música en el carro -->
+        <meta-data
+            android:name="com.google.android.gms.car.application"
+            android:resource="@xml/automotive_app_desc" />
+
+        <!-- Chromecast (experimental, se activa en Ajustes) -->
+        <meta-data
+            android:name="com.google.android.gms.cast.framework.OPTIONS_PROVIDER_CLASS_NAME"
+            android:value="androidx.media3.cast.DefaultCastOptionsProvider" />
+        <receiver
+            android:name="androidx.mediarouter.media.MediaTransferReceiver"
+            android:exported="true" />
 
         <!-- Servicio en primer plano de WorkManager para las descargas -->
         <service

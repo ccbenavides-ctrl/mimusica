@@ -1,5 +1,8 @@
 package app.mimusica.ui.screens
 
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.clickable
 import android.content.Intent
 import android.net.Uri
 import android.os.Build
@@ -47,7 +50,7 @@ import app.mimusica.ui.components.SectionHeader
 import kotlinx.coroutines.launch
 
 @Composable
-fun SettingsScreen(onBack: () -> Unit, onOpenImportHelp: () -> Unit) {
+fun SettingsScreen(onBack: () -> Unit, onOpenImportHelp: () -> Unit, onOpenSound: () -> Unit = {}) {
     val container = LocalAppContainer.current
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
@@ -55,6 +58,34 @@ fun SettingsScreen(onBack: () -> Unit, onOpenImportHelp: () -> Unit) {
     var clientId by remember { mutableStateOf("") }
     var clientIdLoaded by remember { mutableStateOf(false) }
     var minDuration by remember { mutableFloatStateOf(settings.minTrackDurationSec.toFloat()) }
+
+    val exportBackup = rememberLauncherForActivityResult(ActivityResultContracts.CreateDocument("application/json")) { uri ->
+        if (uri != null) scope.launch {
+            try {
+                container.backup.export(uri)
+                Toast.makeText(context, "Copia de seguridad guardada", Toast.LENGTH_SHORT).show()
+            } catch (e: Exception) {
+                Toast.makeText(context, "No se pudo guardar la copia: ${e.message}", Toast.LENGTH_LONG).show()
+            }
+        }
+    }
+    val importBackup = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
+        if (uri != null) scope.launch {
+            try {
+                val r = container.backup.restore(uri)
+                val missing = if (r.missingTracks > 0) " (${r.missingTracks} canciones no están en este teléfono)" else ""
+                Toast.makeText(
+                    context,
+                    "Restaurado: ${r.playlists} listas, ${r.favorites} favoritos, ${r.podcasts} podcasts$missing",
+                    Toast.LENGTH_LONG,
+                ).show()
+            } catch (e: Exception) {
+                Toast.makeText(context, e.message ?: "No se pudo restaurar la copia", Toast.LENGTH_LONG).show()
+            }
+        }
+    }
+    var radioCountry by remember { mutableStateOf("") }
+    LaunchedEffect(settings.radioCountry) { radioCountry = settings.radioCountry }
 
     LaunchedEffect(settings.jamendoClientId, settings.minTrackDurationSec) {
         if (!clientIdLoaded) {
@@ -95,6 +126,64 @@ fun SettingsScreen(onBack: () -> Unit, onOpenImportHelp: () -> Unit) {
                     OutlinedButton(onClick = {
                         context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse("https://devportal.jamendo.com/")))
                     }) { Text("Abrir devportal.jamendo.com") }
+                }
+            }
+
+            HorizontalDivider(Modifier.padding(vertical = 12.dp))
+            SectionHeader("Reproducción")
+            ListItem(
+                headlineContent = { Text("Sonido y reproducción") },
+                supportingContent = { Text("Ecualizador, igualar volumen, fundido entre canciones y caché") },
+                modifier = Modifier.clickable(onClick = onOpenSound),
+            )
+            ListItem(
+                headlineContent = { Text("Mostrar letras") },
+                supportingContent = { Text("Busca la letra de la canción en LRCLIB (gratuito)") },
+                trailingContent = {
+                    Switch(checked = settings.lyricsEnabled, onCheckedChange = { v -> scope.launch { container.settings.setLyricsEnabled(v) } })
+                },
+            )
+            ListItem(
+                headlineContent = { Text("Buscar carátulas que falten") },
+                supportingContent = { Text("Las busca en MusicBrainz cuando un álbum no trae carátula") },
+                trailingContent = {
+                    Switch(checked = settings.autoArtwork, onCheckedChange = { v -> scope.launch { container.settings.setAutoArtwork(v) } })
+                },
+            )
+            ListItem(
+                headlineContent = { Text("Chromecast (experimental)") },
+                supportingContent = { Text("Agrega el botón de transmitir en «Reproduciendo». Solo música por internet; se aplica al reabrir la app") },
+                trailingContent = {
+                    Switch(checked = settings.castEnabled, onCheckedChange = { v -> scope.launch { container.settings.setCastEnabled(v) } })
+                },
+            )
+            Column(Modifier.padding(horizontal = 16.dp)) {
+                OutlinedTextField(
+                    value = radioCountry,
+                    onValueChange = { v ->
+                        radioCountry = v.uppercase().filter { it.isLetter() }.take(2)
+                        if (radioCountry.length == 2) scope.launch { container.settings.setRadioCountry(radioCountry) }
+                    },
+                    label = { Text("País de la radio en vivo (código de 2 letras)") },
+                    supportingText = { Text("CO = Colombia, MX = México, ES = España, US = Estados Unidos…") },
+                    singleLine = true,
+                    modifier = Modifier.fillMaxWidth(),
+                )
+            }
+
+            HorizontalDivider(Modifier.padding(vertical = 12.dp))
+            SectionHeader("Copia de seguridad")
+            Column(Modifier.padding(horizontal = 16.dp)) {
+                Text(
+                    "Guarda tus listas, favoritos, historial y podcasts en un archivo (no incluye la música).",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+                Spacer(Modifier.height(8.dp))
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Button(onClick = { exportBackup.launch("mimusica-copia.json") }) { Text("Guardar copia") }
+                    Spacer(Modifier.padding(4.dp))
+                    OutlinedButton(onClick = { importBackup.launch(arrayOf("application/json", "text/plain", "application/octet-stream")) }) { Text("Restaurar copia") }
                 }
             }
 
@@ -160,7 +249,8 @@ fun SettingsScreen(onBack: () -> Unit, onOpenImportHelp: () -> Unit) {
             Column(Modifier.padding(horizontal = 16.dp)) {
                 Text(
                     "MiMúsica reproduce la música guardada en tu teléfono y música gratuita y legal de " +
-                        "Internet Archive y Jamendo (licencias Creative Commons, dominio público o permiso del artista).\n\n" +
+                        "Internet Archive y Jamendo (licencias Creative Commons, dominio público o permiso del artista), " +
+                        "además de radio en vivo (Radio Browser) y podcasts públicos.\n\n" +
                         "No accede a las descargas de Spotify ni descarga audio de Spotify, YouTube u otras fuentes " +
                         "sin licencia. De Spotify solo se importan los nombres de las canciones.",
                     style = MaterialTheme.typography.bodySmall,

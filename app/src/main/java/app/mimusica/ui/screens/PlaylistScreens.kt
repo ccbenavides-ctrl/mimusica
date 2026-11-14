@@ -1,5 +1,8 @@
 package app.mimusica.ui.screens
 
+import androidx.compose.foundation.background
+import androidx.compose.runtime.mutableIntStateOf
+import app.mimusica.ui.components.DragHandle
 import android.net.Uri
 import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
@@ -227,6 +230,7 @@ fun PlaylistDetailScreen(playlistId: Long, onBack: () -> Unit) {
     var menu by remember { mutableStateOf(false) }
     var renaming by remember { mutableStateOf(false) }
     var confirmDelete by remember { mutableStateOf(false) }
+    var draggingIndex by remember { mutableIntStateOf(-1) }
     val name = playlist?.name ?: "Lista"
     val export = rememberM3uExporter(name) { tracks }
 
@@ -263,19 +267,17 @@ fun PlaylistDetailScreen(playlistId: Long, onBack: () -> Unit) {
                 TrackRow(
                     t,
                     onClick = { container.trackActions.play(tracks, i) },
+                    modifier = if (i == draggingIndex) Modifier.background(MaterialTheme.colorScheme.surfaceVariant) else Modifier,
+                    leading = {
+                        // Arrastrar el asa cambia el orden de la lista.
+                        DragHandle(
+                            index = i,
+                            count = tracks.size,
+                            onMove = { from, to -> scope.launch { container.library.movePlaylistItem(playlistId, from, to) } },
+                            onDragging = { draggingIndex = it },
+                        )
+                    },
                     extraMenuItems = { dismiss ->
-                        DropdownMenuItem(
-                            text = { Text("Subir") },
-                            leadingIcon = { Icon(Icons.Filled.KeyboardArrowUp, null) },
-                            enabled = i > 0,
-                            onClick = { dismiss(); scope.launch { container.library.movePlaylistItem(playlistId, i, i - 1) } },
-                        )
-                        DropdownMenuItem(
-                            text = { Text("Bajar") },
-                            leadingIcon = { Icon(Icons.Filled.KeyboardArrowDown, null) },
-                            enabled = i < tracks.lastIndex,
-                            onClick = { dismiss(); scope.launch { container.library.movePlaylistItem(playlistId, i, i + 1) } },
-                        )
                         DropdownMenuItem(
                             text = { Text("Quitar de esta lista") },
                             leadingIcon = { Icon(Icons.Filled.RemoveCircleOutline, null) },

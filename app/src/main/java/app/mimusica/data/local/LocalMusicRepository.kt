@@ -11,6 +11,7 @@ import android.os.Handler
 import android.os.Looper
 import android.provider.MediaStore
 import androidx.core.content.ContextCompat
+import app.mimusica.data.db.OverrideDao
 import app.mimusica.data.settings.SettingsRepository
 import app.mimusica.domain.model.AlbumSummary
 import app.mimusica.domain.model.ArtistSummary
@@ -49,6 +50,7 @@ class LocalMusicRepository(
     private val context: Context,
     private val settings: SettingsRepository,
     private val scope: CoroutineScope,
+    private val overrideDao: OverrideDao,
 ) {
     private val _state = MutableStateFlow(LibraryState(hasPermission = hasAudioPermission(context)))
     val state: StateFlow<LibraryState> = _state.asStateFlow()
@@ -69,6 +71,10 @@ class LocalMusicRepository(
             settings.settings.map { it.minTrackDurationSec }.distinctUntilChanged().drop(1).collect {
                 refresh()
             }
+        }
+        // Si el usuario corrige los datos de una canción, se vuelve a aplicar sobre la biblioteca.
+        scope.launch {
+            overrideDao.observeAll().drop(1).collect { refresh() }
         }
     }
 
@@ -107,7 +113,19 @@ class LocalMusicRepository(
             _state.value = _state.value.copy(hasPermission = true, isScanning = true, error = null)
             try {
                 val minSec = settings.settings.first().minTrackDurationSec
-                val tracks = withContext(Dispatchers.IO) { scan(minSec * 1000L) }
+                val overrides = overrideDao.getAll().associateBy { it.trackKey }
+                val tracks = withContext(Dispatchers.IO) {
+                    val scanned = scan(minSec * 1000L)
+                    if (overrides.isEmpty()) scanned else scanned.map { t ->
+                        val o = overrides[t.key] ?: return@map t
+                        t.copy(
+                            title = o.title?.takeIf { it.isNotBlank() } ?: t.title,
+                            artist = o.artist?.takeIf { it.isNotBlank() } ?: t.artist,
+                            album = o.album?.takeIf { it.isNotBlank() } ?: t.album,
+                            artworkUri = o.artworkUri?.takeIf { it.isNotBlank() } ?: t.artworkUri,
+                        )
+                    }.sortedBy { it.title.lowercase() }
+                }
                 _state.value = LibraryState(tracks = tracks, hasPermission = true, isScanning = false, loadedOnce = true)
             } catch (e: SecurityException) {
                 _state.value = _state.value.copy(hasPermission = false, isScanning = false, loadedOnce = true)
@@ -127,7 +145,9 @@ class LocalMusicRepository(
         } else {
             MediaStore.Audio.Media.EXTERNAL_CONTENT_URI
         }
-        val projection = arrayOf(
+        // La columna de género existe desde Android 11.
+        val hasGenre = Build.VERSION.SDK_INT >= Build.VERSION_CODES.R
+        val projection = listOfNotNull(
             MediaStore.Audio.Media._ID,
             MediaStore.Audio.Media.TITLE,
             MediaStore.Audio.Media.ARTIST,
@@ -137,7 +157,8 @@ class LocalMusicRepository(
             MediaStore.Audio.Media.DATE_ADDED,
             MediaStore.Audio.Media.TRACK,
             MediaStore.Audio.Media.DISPLAY_NAME,
-        )
+            if (hasGenre) "genre" else null,
+        ).toTypedArray()
         val selection = "${MediaStore.Audio.Media.IS_MUSIC} != 0 AND ${MediaStore.Audio.Media.DURATION} >= ?"
         val args = arrayOf(minDurationMs.toString())
         val sort = "${MediaStore.Audio.Media.TITLE} COLLATE NOCASE ASC"
@@ -152,6 +173,7 @@ class LocalMusicRepository(
             val dateCol = c.getColumnIndexOrThrow(MediaStore.Audio.Media.DATE_ADDED)
             val trackCol = c.getColumnIndexOrThrow(MediaStore.Audio.Media.TRACK)
             val nameCol = c.getColumnIndexOrThrow(MediaStore.Audio.Media.DISPLAY_NAME)
+            val genreCol = if (hasGenre) c.getColumnIndex("genre") else -1
             while (c.moveToNext()) {
                 val id = c.getLong(idCol)
                 val albumId = c.getLong(albumIdCol)
@@ -177,6 +199,7 @@ class LocalMusicRepository(
                         dateAddedSec = c.getLong(dateCol),
                         trackNumber = trackNumber,
                         albumId = albumId,
+                        genre = if (genreCol >= 0) c.getString(genreCol)?.trim().orEmpty() else "",
                     )
                 )
             }

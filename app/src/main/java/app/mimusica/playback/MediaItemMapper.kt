@@ -48,6 +48,13 @@ object MediaItemMapper {
             .build()
     }
 
+    /** URI real con la que se reproduce el elemento (puede ser la copia descargada). */
+    fun playbackUri(item: MediaItem): String =
+        item.mediaMetadata.extras?.getString(EXTRA_URI)
+            ?: item.localConfiguration?.uri?.toString()
+            ?: item.requestMetadata.mediaUri?.toString()
+            ?: ""
+
     fun toTrack(item: MediaItem): Track {
         val m = item.mediaMetadata
         val extras = m.extras

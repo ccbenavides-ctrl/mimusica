@@ -18,6 +18,9 @@ interface CachedTrackDao {
 
     @Query("SELECT * FROM cached_tracks WHERE trackKey = :key")
     suspend fun get(key: String): CachedTrackEntity?
+
+    @Query("SELECT * FROM cached_tracks")
+    suspend fun getAll(): List<CachedTrackEntity>
 }
 
 @Dao
@@ -34,6 +37,16 @@ abstract class PlaylistDao {
 
     @Query("SELECT * FROM playlists WHERE id = :id")
     abstract suspend fun get(id: Long): PlaylistEntity?
+
+    @Query("SELECT * FROM playlists ORDER BY name COLLATE NOCASE")
+    abstract suspend fun getAll(): List<PlaylistEntity>
+
+    @Query(
+        """SELECT pt.position AS position, c.* FROM playlist_tracks pt
+           INNER JOIN cached_tracks c ON c.trackKey = pt.trackKey
+           WHERE pt.playlistId = :playlistId ORDER BY pt.position"""
+    )
+    abstract suspend fun getTracks(playlistId: Long): List<PlaylistTrackRow>
 
     @Insert
     abstract suspend fun insert(playlist: PlaylistEntity): Long
@@ -90,6 +103,15 @@ interface FavoriteDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insert(favorite: FavoriteEntity)
 
+    @Query("SELECT * FROM favorites ORDER BY addedAt DESC")
+    suspend fun getAll(): List<FavoriteEntity>
+
+    @Query(
+        """SELECT c.* FROM favorites f INNER JOIN cached_tracks c ON c.trackKey = f.trackKey
+           ORDER BY f.addedAt DESC"""
+    )
+    suspend fun getTracks(): List<CachedTrackEntity>
+
     @Query("DELETE FROM favorites WHERE trackKey = :key")
     suspend fun delete(key: String)
 
@@ -117,6 +139,98 @@ interface HistoryDao {
     fun observeMostPlayed(limit: Int): Flow<List<CachedTrackEntity>>
 
     @Query("DELETE FROM history")
+    suspend fun clear()
+
+    @Insert
+    suspend fun insertAll(entries: List<HistoryEntity>)
+
+    @Query("SELECT * FROM history ORDER BY playedAt")
+    suspend fun getAll(): List<HistoryEntity>
+
+    @Query(
+        """SELECT c.* FROM cached_tracks c INNER JOIN
+           (SELECT trackKey, MAX(playedAt) AS lastPlayed FROM history GROUP BY trackKey) h
+           ON h.trackKey = c.trackKey ORDER BY h.lastPlayed DESC LIMIT :limit"""
+    )
+    suspend fun getRecent(limit: Int): List<CachedTrackEntity>
+
+    @Query(
+        """SELECT h.playedAt AS playedAt, c.* FROM history h
+           INNER JOIN cached_tracks c ON c.trackKey = h.trackKey
+           WHERE h.playedAt >= :since ORDER BY h.playedAt"""
+    )
+    suspend fun eventsSince(since: Long): List<HistoryRow>
+
+    @Query("SELECT trackKey AS trackKey, COUNT(*) AS plays FROM history GROUP BY trackKey")
+    fun observePlayCounts(): Flow<List<PlayCount>>
+}
+
+@Dao
+interface LyricsDao {
+    @Query("SELECT * FROM lyrics WHERE trackKey = :key")
+    suspend fun get(key: String): LyricsEntity?
+
+    @Upsert
+    suspend fun upsert(entity: LyricsEntity)
+
+    @Query("DELETE FROM lyrics WHERE trackKey = :key")
+    suspend fun delete(key: String)
+}
+
+@Dao
+interface PodcastDao {
+    @Query("SELECT * FROM podcasts ORDER BY title COLLATE NOCASE")
+    fun observeAll(): Flow<List<PodcastEntity>>
+
+    @Query("SELECT * FROM podcasts")
+    suspend fun getAll(): List<PodcastEntity>
+
+    @Query("SELECT COUNT(*) FROM podcasts WHERE feedUrl = :feedUrl")
+    fun observeSubscribed(feedUrl: String): Flow<Int>
+
+    @Upsert
+    suspend fun upsert(entity: PodcastEntity)
+
+    @Query("DELETE FROM podcasts WHERE feedUrl = :feedUrl")
+    suspend fun delete(feedUrl: String)
+
+    @Query("SELECT * FROM episode_progress WHERE trackKey = :key")
+    suspend fun progress(key: String): EpisodeProgressEntity?
+
+    @Query("SELECT * FROM episode_progress")
+    fun observeProgress(): Flow<List<EpisodeProgressEntity>>
+
+    @Upsert
+    suspend fun saveProgress(entity: EpisodeProgressEntity)
+}
+
+@Dao
+interface OverrideDao {
+    @Query("SELECT * FROM track_overrides")
+    fun observeAll(): Flow<List<TrackOverrideEntity>>
+
+    @Query("SELECT * FROM track_overrides")
+    suspend fun getAll(): List<TrackOverrideEntity>
+
+    @Query("SELECT * FROM track_overrides WHERE trackKey = :key")
+    suspend fun get(key: String): TrackOverrideEntity?
+
+    @Upsert
+    suspend fun upsert(entity: TrackOverrideEntity)
+
+    @Query("DELETE FROM track_overrides WHERE trackKey = :key")
+    suspend fun delete(key: String)
+}
+
+@Dao
+interface AlbumArtDao {
+    @Query("SELECT * FROM album_art WHERE albumKey = :key")
+    suspend fun get(key: String): AlbumArtEntity?
+
+    @Upsert
+    suspend fun upsert(entity: AlbumArtEntity)
+
+    @Query("DELETE FROM album_art")
     suspend fun clear()
 }
 

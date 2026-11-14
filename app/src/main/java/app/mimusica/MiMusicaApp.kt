@@ -23,6 +23,6 @@ class MiMusicaApp : Application(), SingletonImageLoader.Factory {
             .build()
 
     companion object {
-        const val USER_AGENT = "MiMusica/1.0 (Android; reproductor personal)"
+        const val USER_AGENT = "MiMusica/2.0 (Android; reproductor personal)"
     }
 }

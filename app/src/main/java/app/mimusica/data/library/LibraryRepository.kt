@@ -9,6 +9,13 @@ import app.mimusica.data.db.HistoryEntity
 import app.mimusica.data.db.ImportedPlaylistEntity
 import app.mimusica.data.db.ImportedTrackEntity
 import app.mimusica.data.db.PlaylistEntity
+import app.mimusica.data.db.TrackOverrideEntity
+import app.mimusica.domain.stats.ListeningStats
+import app.mimusica.domain.stats.PlayEvent
+import app.mimusica.domain.stats.StatsCalculator
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
+import java.util.TimeZone
 import app.mimusica.domain.importer.ImportedRow
 import app.mimusica.domain.m3u.M3uCodec
 import app.mimusica.domain.m3u.M3uEntry
@@ -49,6 +56,39 @@ class LibraryRepository(
     private val historyDao = db.historyDao()
     private val cachedDao = db.cachedTrackDao()
     private val importDao = db.importDao()
+    private val overrideDao = db.overrideDao()
+    private val playlistMutex = Mutex()
+
+    /** Reproducciones por canción (para las mezclas de la pantalla de inicio). */
+    val playCounts: Flow<Map<String, Int>> = historyDao.observePlayCounts().map { list -> list.associate { it.trackKey to it.plays } }
+
+    /** Estadísticas de escucha desde [since] (milisegundos; 0 = todo el historial). */
+    suspend fun stats(since: Long): ListeningStats {
+        val events = historyDao.eventsSince(since).map { PlayEvent(it.track.toTrack(), it.playedAt) }
+        return withContext(Dispatchers.Default) {
+            StatsCalculator.compute(events, zoneOffsetMs = TimeZone.getDefault().getOffset(System.currentTimeMillis()).toLong())
+        }
+    }
+
+    // ---- Datos corregidos por el usuario (solo dentro de la app; el archivo no se toca) ----
+    suspend fun trackOverride(key: String) = overrideDao.get(key)
+
+    suspend fun saveOverride(key: String, title: String?, artist: String?, album: String?, artworkUri: String?) {
+        val clean = TrackOverrideEntity(
+            trackKey = key,
+            title = title?.trim()?.takeIf { it.isNotBlank() },
+            artist = artist?.trim()?.takeIf { it.isNotBlank() },
+            album = album?.trim()?.takeIf { it.isNotBlank() },
+            artworkUri = artworkUri?.takeIf { it.isNotBlank() },
+        )
+        if (clean.title == null && clean.artist == null && clean.album == null && clean.artworkUri == null) {
+            overrideDao.delete(key)
+        } else {
+            overrideDao.upsert(clean)
+        }
+    }
+
+    suspend fun clearOverride(key: String) = overrideDao.delete(key)
 
     val playlists = playlistDao.observeSummaries()
 
@@ -100,16 +140,16 @@ class LibraryRepository(
         playlistDao.appendEntries(id, tracks.map { it.key })
     }
 
-    suspend fun removeFromPlaylist(id: Long, index: Int) {
+    suspend fun removeFromPlaylist(id: Long, index: Int) = playlistMutex.withLock {
         val keys = playlistDao.getEntries(id).map { it.trackKey }.toMutableList()
-        if (index !in keys.indices) return
+        if (index !in keys.indices) return@withLock
         keys.removeAt(index)
         playlistDao.replaceEntries(id, keys)
     }
 
-    suspend fun movePlaylistItem(id: Long, from: Int, to: Int) {
+    suspend fun movePlaylistItem(id: Long, from: Int, to: Int) = playlistMutex.withLock {
         val keys = playlistDao.getEntries(id).map { it.trackKey }.toMutableList()
-        if (from !in keys.indices || to !in keys.indices || from == to) return
+        if (from !in keys.indices || to !in keys.indices || from == to) return@withLock
         val item = keys.removeAt(from)
         keys.add(to, item)
         playlistDao.replaceEntries(id, keys)

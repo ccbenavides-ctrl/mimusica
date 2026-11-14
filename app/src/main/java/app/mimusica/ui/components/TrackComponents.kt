@@ -24,6 +24,8 @@ import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.FavoriteBorder
 import androidx.compose.material.icons.filled.GraphicEq
 import androidx.compose.material.icons.filled.MoreVert
+import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.filled.Radio
 import androidx.compose.material.icons.filled.SkipNext
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.DropdownMenu
@@ -74,12 +76,12 @@ fun TrackRow(
             .fillMaxWidth()
             .clickable(onClick = onClick)
             .heightIn(min = 64.dp)
-            .padding(start = 16.dp, end = 4.dp, top = 6.dp, bottom = 6.dp),
+            .padding(start = if (leading != null) 4.dp else 16.dp, end = 4.dp, top = 6.dp, bottom = 6.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         if (leading != null) leading()
         if (showArtwork) {
-            Artwork(track.artworkUri, 48.dp)
+            TrackArtwork(track, 48.dp)
             Spacer(Modifier.width(12.dp))
         }
         Column(Modifier.weight(1f)) {
@@ -92,7 +94,7 @@ fun TrackRow(
                 overflow = TextOverflow.Ellipsis,
             )
             Text(
-                subtitle ?: listOf(track.artist, formatDuration(track.durationMs)).joinToString(" · "),
+                subtitle ?: if (track.isLive) track.artist else listOf(track.artist, formatDuration(track.durationMs)).joinToString(" · "),
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 maxLines = 1,
@@ -141,6 +143,7 @@ fun TrackMenuButton(
     val downloads by container.downloads.byKey.collectAsStateWithLifecycle()
     var expanded by remember { mutableStateOf(false) }
     var showPlaylistDialog by remember { mutableStateOf(false) }
+    var showEditDialog by remember { mutableStateOf(false) }
     val isFavorite = track.key in favorites
     val downloadStatus = downloads[track.key]?.status
 
@@ -176,6 +179,24 @@ fun TrackMenuButton(
             leadingIcon = { Icon(if (isFavorite) Icons.Filled.Favorite else Icons.Filled.FavoriteBorder, null) },
             onClick = { expanded = false; actions.toggleFavorite(track) },
         )
+        if (!track.isLive && !track.isPodcast) {
+            DropdownMenuItem(
+                text = { Text("Radio de esta canción") },
+                leadingIcon = { Icon(Icons.Filled.Radio, null) },
+                onClick = {
+                    expanded = false
+                    actions.songRadio(track)
+                    Toast.makeText(context, "Sonando canciones parecidas de tu biblioteca", Toast.LENGTH_SHORT).show()
+                },
+            )
+        }
+        if (!track.isOnline) {
+            DropdownMenuItem(
+                text = { Text("Editar datos y carátula…") },
+                leadingIcon = { Icon(Icons.Filled.Edit, null) },
+                onClick = { expanded = false; showEditDialog = true },
+            )
+        }
         if (track.canDownload) {
             val label = when (downloadStatus) {
                 DownloadStatus.COMPLETED -> "Ya descargada"
@@ -200,6 +221,9 @@ fun TrackMenuButton(
     }
     if (showPlaylistDialog) {
         AddToPlaylistDialog(tracks = listOf(track), onDismiss = { showPlaylistDialog = false })
+    }
+    if (showEditDialog) {
+        EditTrackDialog(track = track, onDismiss = { showEditDialog = false })
     }
 }
 

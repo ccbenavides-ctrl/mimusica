@@ -8,6 +8,13 @@ import app.mimusica.data.local.LocalMusicRepository
 import app.mimusica.data.remote.OnlineRepository
 import app.mimusica.data.settings.SettingsRepository
 import app.mimusica.domain.model.Track
+import app.mimusica.data.backup.BackupManager
+import app.mimusica.data.remote.ArtworkRepository
+import app.mimusica.data.remote.LyricsRepository
+import app.mimusica.data.remote.PodcastRepository
+import app.mimusica.data.remote.RadioRepository
+import app.mimusica.domain.mix.MixBuilder
+import app.mimusica.playback.PlaybackExtras
 import app.mimusica.playback.PlayerConnection
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -33,7 +40,7 @@ class AppContainer(context: Context) {
 
     val database: AppDatabase = AppDatabase.create(appContext)
     val settings = SettingsRepository(appContext)
-    val localMusic = LocalMusicRepository(appContext, settings, appScope)
+    val localMusic = LocalMusicRepository(appContext, settings, appScope, database.overrideDao())
     val library = LibraryRepository(appContext, database, appScope)
     val downloads = DownloadRepository(appContext, database, library, settings, appScope)
 
@@ -43,7 +50,16 @@ class AppContainer(context: Context) {
         settings = settings,
     )
 
-    val player = PlayerConnection(appContext) { track -> downloads.resolveForPlayback(track).uri }
+    /** Estado compartido con el servicio de reproducción (temporizador, ecualizador, título en vivo). */
+    val extras = PlaybackExtras()
+
+    val player = PlayerConnection(appContext, extras) { track -> downloads.resolveForPlayback(track).uri }
+
+    val lyrics = LyricsRepository(okHttpClient, database)
+    val radio = RadioRepository(okHttpClient)
+    val podcasts = PodcastRepository(okHttpClient, database)
+    val artwork = ArtworkRepository(okHttpClient, database)
+    val backup = BackupManager(appContext, database, library, localMusic)
 
     /** Acciones comunes sobre una pista (menú ⋮), compartidas por todas las pantallas. */
     val trackActions = TrackActions(this)
@@ -55,6 +71,12 @@ class TrackActions(private val c: AppContainer) {
     fun shuffle(tracks: List<Track>) = c.player.playTracks(tracks, shuffle = true)
     fun playNext(track: Track) = c.player.playNext(track)
     fun addToQueue(track: Track) = c.player.addToQueue(listOf(track))
+
+    /** "Radio de esta canción": cola con canciones parecidas de la biblioteca. */
+    fun songRadio(seed: Track) {
+        val queue = MixBuilder.songRadio(seed, c.localMusic.state.value.tracks, c.library.favoriteKeys.value)
+        c.player.playTracks(queue, 0)
+    }
 
     fun toggleFavorite(track: Track) {
         c.appScope.launch { c.library.toggleFavorite(track) }

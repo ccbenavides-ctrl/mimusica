@@ -5,4 +5,7 @@
     <color name="icon_accent">#FF8A65</color>
     <color name="window_light">#FAFDFD</color>
     <color name="window_dark">#101415</color>
+    <color name="widget_background">#F0152226</color>
+    <color name="widget_text">#FFFFFF</color>
+    <color name="widget_text_secondary">#B3FFFFFF</color>
 </resources>

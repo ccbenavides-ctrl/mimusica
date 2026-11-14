@@ -4,7 +4,9 @@ package app.mimusica.domain.model
 enum class TrackSource(val label: String) {
     LOCAL("En mi teléfono"),
     INTERNET_ARCHIVE("Internet Archive"),
-    JAMENDO("Jamendo");
+    JAMENDO("Jamendo"),
+    RADIO("Radio en vivo"),
+    PODCAST("Podcast");
 
     companion object {
         fun fromName(name: String?): TrackSource =
@@ -19,6 +21,8 @@ enum class TrackSource(val label: String) {
  *  - `local:<mediaStoreId>`
  *  - `ia:<identifier>/<file>`
  *  - `jam:<id>`
+ *  - `radio:<stationuuid>`
+ *  - `pod:<hash del enlace del episodio>`
  */
 data class Track(
     val key: String,
@@ -35,9 +39,13 @@ data class Track(
     val dateAddedSec: Long = 0L,
     val trackNumber: Int = 0,
     val albumId: Long = 0L,
+    val genre: String = "",
 ) {
     val isOnline: Boolean get() = source != TrackSource.LOCAL
-    val canDownload: Boolean get() = isOnline && !downloadUrl.isNullOrBlank()
+    /** Emisora en vivo: sin duración, sin barra de progreso y sin descarga. */
+    val isLive: Boolean get() = source == TrackSource.RADIO
+    val isPodcast: Boolean get() = source == TrackSource.PODCAST
+    val canDownload: Boolean get() = isOnline && !isLive && !downloadUrl.isNullOrBlank()
 
     companion object {
         const val UNKNOWN_ARTIST = "Artista desconocido"
@@ -46,10 +54,14 @@ data class Track(
         fun localKey(mediaStoreId: Long) = "local:$mediaStoreId"
         fun internetArchiveKey(identifier: String, file: String) = "ia:$identifier/$file"
         fun jamendoKey(id: String) = "jam:$id"
+        fun radioKey(uuid: String) = "radio:$uuid"
+        fun podcastKey(hash: String) = "pod:$hash"
 
         fun sourceOfKey(key: String): TrackSource = when {
             key.startsWith("ia:") -> TrackSource.INTERNET_ARCHIVE
             key.startsWith("jam:") -> TrackSource.JAMENDO
+            key.startsWith("radio:") -> TrackSource.RADIO
+            key.startsWith("pod:") -> TrackSource.PODCAST
             else -> TrackSource.LOCAL
         }
 

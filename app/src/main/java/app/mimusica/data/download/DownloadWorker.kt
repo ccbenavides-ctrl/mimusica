@@ -48,7 +48,7 @@ class DownloadWorker(appContext: Context, params: WorkerParameters) : CoroutineW
                     val body = response.body
                     val total = body.contentLength()
                     val ext = guessExtension(entity.sourceUrl, response.header("Content-Type"))
-                    target = MediaStoreWriter.create(applicationContext, entity.title, entity.artist, entity.album, ext)
+                    target = MediaStoreWriter.create(applicationContext, entity.title, entity.artist, entity.album, ext, podcast = key.startsWith("pod:"))
                     MediaStoreWriter.openOutput(applicationContext, target!!).use { out ->
                         body.byteStream().use { input ->
                             val buffer = ByteArray(64 * 1024)

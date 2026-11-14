@@ -44,7 +44,9 @@ object MediaStoreWriter {
         else -> "audio/mpeg"
     }
 
-    fun create(context: Context, title: String, artist: String, album: String, extension: String): DownloadTarget {
+    fun create(context: Context, title: String, artist: String, album: String, extension: String, podcast: Boolean = false): DownloadTarget {
+        // Los episodios de podcast van a la carpeta Podcasts para no mezclarse con las canciones.
+        val baseDir = if (podcast) Environment.DIRECTORY_PODCASTS else Environment.DIRECTORY_MUSIC
         val artistDir = safeName(artist, "Desconocido")
         val fileName = safeName("$artist - $title", "pista") + "." + extension
         val mime = mimeFor(extension)
@@ -52,11 +54,11 @@ object MediaStoreWriter {
             val values = ContentValues().apply {
                 put(MediaStore.Audio.Media.DISPLAY_NAME, fileName)
                 put(MediaStore.Audio.Media.MIME_TYPE, mime)
-                put(MediaStore.Audio.Media.RELATIVE_PATH, "${Environment.DIRECTORY_MUSIC}/MiMusica/$artistDir")
+                put(MediaStore.Audio.Media.RELATIVE_PATH, "$baseDir/MiMusica/$artistDir")
                 put(MediaStore.Audio.Media.TITLE, title)
                 put(MediaStore.Audio.Media.ARTIST, artist)
                 put(MediaStore.Audio.Media.ALBUM, album)
-                put(MediaStore.Audio.Media.IS_MUSIC, 1)
+                if (podcast) put(MediaStore.Audio.Media.IS_PODCAST, 1) else put(MediaStore.Audio.Media.IS_MUSIC, 1)
                 put(MediaStore.Audio.Media.IS_PENDING, 1)
             }
             val collection = MediaStore.Audio.Media.getContentUri(MediaStore.VOLUME_EXTERNAL_PRIMARY)
@@ -65,7 +67,7 @@ object MediaStoreWriter {
             DownloadTarget(uri, null, mime, title, artist, album)
         } else {
             @Suppress("DEPRECATION")
-            val musicDir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_MUSIC)
+            val musicDir = Environment.getExternalStoragePublicDirectory(baseDir)
             val dir = File(musicDir, "MiMusica/$artistDir")
             if (!dir.exists() && !dir.mkdirs()) {
                 throw IllegalStateException("No se pudo crear la carpeta ${dir.absolutePath}. ¿Diste permiso de almacenamiento?")

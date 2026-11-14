@@ -27,6 +27,7 @@ data class PlayerState(
     val currentIndex: Int = -1,
     val durationMs: Long = 0L,
     val error: String? = null,
+    val speed: Float = 1f,
 ) {
     val hasMedia: Boolean get() = current != null
 }
@@ -37,6 +38,7 @@ data class PlayerState(
  */
 class PlayerConnection(
     private val context: Context,
+    private val extras: PlaybackExtras,
     private val resolveUri: (Track) -> String,
 ) {
     private val _state = MutableStateFlow(PlayerState())
@@ -138,6 +140,13 @@ class PlayerConnection(
     fun seekTo(positionMs: Long) = withController { it.seekTo(positionMs) }
     fun toggleShuffle() = withController { it.shuffleModeEnabled = !it.shuffleModeEnabled }
 
+    fun seekBy(deltaMs: Long) = withController { c ->
+        val duration = c.duration.takeIf { it != C.TIME_UNSET } ?: Long.MAX_VALUE
+        c.seekTo((c.currentPosition + deltaMs).coerceIn(0L, duration))
+    }
+
+    fun setSpeed(speed: Float) = withController { it.setPlaybackSpeed(speed.coerceIn(0.5f, 2f)) }
+
     fun cycleRepeat() = withController { c ->
         c.repeatMode = when (c.repeatMode) {
             Player.REPEAT_MODE_OFF -> Player.REPEAT_MODE_ALL
@@ -195,6 +204,7 @@ class PlayerConnection(
             currentIndex = c.currentMediaItemIndex,
             durationMs = duration,
             error = if (c.playerError == null) null else _state.value.error,
+            speed = c.playbackParameters.speed,
         )
     }
 

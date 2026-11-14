@@ -165,3 +165,58 @@ data class ImportedPlaylistSummary(
     val total: Int,
     val matched: Int,
 )
+
+/** Letra guardada de una canción (LRCLIB). [found] = false recuerda que no había letra. */
+@Entity(tableName = "lyrics")
+data class LyricsEntity(
+    @PrimaryKey val trackKey: String,
+    val synced: String?,
+    val plain: String?,
+    val found: Boolean,
+    val fetchedAt: Long,
+)
+
+/** Podcast al que el usuario está suscrito. */
+@Entity(tableName = "podcasts")
+data class PodcastEntity(
+    @PrimaryKey val feedUrl: String,
+    val title: String,
+    val author: String,
+    val artworkUrl: String?,
+    val subscribedAt: Long,
+)
+
+/** Punto donde quedó un episodio de podcast. */
+@Entity(tableName = "episode_progress")
+data class EpisodeProgressEntity(
+    @PrimaryKey val trackKey: String,
+    val positionMs: Long,
+    val durationMs: Long,
+    val updatedAt: Long,
+)
+
+/** Datos corregidos por el usuario para una canción local (no se modifica el archivo). */
+@Entity(tableName = "track_overrides")
+data class TrackOverrideEntity(
+    @PrimaryKey val trackKey: String,
+    val title: String?,
+    val artist: String?,
+    val album: String?,
+    val artworkUri: String?,
+)
+
+/** Carátula encontrada en internet para un álbum sin carátula ([url] null = no se encontró). */
+@Entity(tableName = "album_art")
+data class AlbumArtEntity(
+    @PrimaryKey val albumKey: String,
+    val url: String?,
+    val checkedAt: Long,
+)
+
+/** Reproducción del historial con los datos de su pista. */
+data class HistoryRow(
+    val playedAt: Long,
+    @Embedded val track: CachedTrackEntity,
+)
+
+data class PlayCount(val trackKey: String, val plays: Int)

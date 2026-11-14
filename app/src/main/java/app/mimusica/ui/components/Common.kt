@@ -34,7 +34,30 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
 import app.mimusica.AppContainer
+import android.graphics.Bitmap
+import androidx.compose.foundation.gestures.detectDragGestures
+import androidx.compose.material.icons.filled.DragHandle
+import androidx.compose.material.icons.filled.Podcasts
+import androidx.compose.material.icons.filled.Radio
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalDensity
+import app.mimusica.domain.model.Track
+import coil3.SingletonImageLoader
 import coil3.compose.AsyncImage
+import coil3.request.ImageRequest
+import coil3.request.SuccessResult
+import coil3.request.allowHardware
+import coil3.toBitmap
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 
 val LocalAppContainer = staticCompositionLocalOf<AppContainer> { error("AppContainer no disponible") }
 
@@ -71,13 +94,33 @@ fun licenseLabel(url: String?): String? {
     }
 }
 
+/** True si se deben buscar en internet las carátulas que falten (ajuste del usuario). */
+val LocalAutoArtwork = staticCompositionLocalOf { true }
+
+/**
+ * Carátula con ícono de respaldo. Si se pasan [artist] y [album] y la carátula no existe o no carga,
+ * se busca una en internet (una sola vez por álbum).
+ */
 @Composable
 fun Artwork(
     model: String?,
     size: Dp,
     modifier: Modifier = Modifier,
     icon: ImageVector = Icons.Filled.MusicNote,
+    artist: String? = null,
+    album: String? = null,
 ) {
+    val container = LocalAppContainer.current
+    val autoArtwork = LocalAutoArtwork.current
+    val canSearch = autoArtwork && !artist.isNullOrBlank() && !album.isNullOrBlank()
+    var failed by remember(model) { mutableStateOf(model.isNullOrBlank()) }
+    var fallback by remember(model, artist, album) {
+        mutableStateOf(if (canSearch) container.artwork.cached(artist!!, album!!) else null)
+    }
+    if (failed && fallback == null && canSearch) {
+        LaunchedEffect(artist, album) { fallback = container.artwork.find(artist!!, album!!) }
+    }
+    val shown = if (!failed) model else fallback
     Box(
         modifier = modifier
             .size(size)
@@ -91,15 +134,133 @@ fun Artwork(
             tint = MaterialTheme.colorScheme.onSurfaceVariant,
             modifier = Modifier.size(size / 2),
         )
-        if (!model.isNullOrBlank()) {
+        if (!shown.isNullOrBlank()) {
             AsyncImage(
-                model = model,
+                model = shown,
                 contentDescription = null,
                 contentScale = ContentScale.Crop,
+                onError = { if (!failed) failed = true },
                 modifier = Modifier.fillMaxSize(),
             )
         }
     }
+}
+
+/** Carátula de una pista: solo busca en internet las de canciones del teléfono. */
+@Composable
+fun TrackArtwork(track: Track, size: Dp, modifier: Modifier = Modifier) {
+    val local = !track.isOnline
+    Artwork(
+        model = track.artworkUri,
+        size = size,
+        modifier = modifier,
+        icon = when {
+            track.isLive -> Icons.Filled.Radio
+            track.isPodcast -> Icons.Filled.Podcasts
+            else -> Icons.Filled.MusicNote
+        },
+        artist = if (local) track.artist else null,
+        album = if (local) track.album else null,
+    )
+}
+
+/**
+ * Asa para reordenar arrastrando. Funciona en listas sin `key`: el asa se queda en su fila y lleva la
+ * cuenta de a qué posición se ha movido el elemento. [onDragging] informa la posición actual (-1 al soltar).
+ */
+@Composable
+fun DragHandle(
+    index: Int,
+    count: Int,
+    onMove: (from: Int, to: Int) -> Unit,
+    modifier: Modifier = Modifier,
+    onDragging: (Int) -> Unit = {},
+) {
+    val currentIndex by rememberUpdatedState(index)
+    val currentCount by rememberUpdatedState(count)
+    val move by rememberUpdatedState(onMove)
+    val dragging by rememberUpdatedState(onDragging)
+    val stepPx = with(LocalDensity.current) { 60.dp.toPx() }
+    Icon(
+        Icons.Filled.DragHandle,
+        contentDescription = "Arrastrar para reordenar",
+        tint = MaterialTheme.colorScheme.onSurfaceVariant,
+        modifier = modifier
+            .pointerInput(Unit) {
+                var position = -1
+                var acc = 0f
+                detectDragGestures(
+                    onDragStart = {
+                        position = currentIndex
+                        acc = 0f
+                        dragging(position)
+                    },
+                    onDragEnd = { position = -1; dragging(-1) },
+                    onDragCancel = { position = -1; dragging(-1) },
+                ) { change, amount ->
+                    change.consume()
+                    acc += amount.y
+                    while (acc > stepPx && position >= 0 && position < currentCount - 1) {
+                        move(position, position + 1)
+                        position++
+                        acc -= stepPx
+                        dragging(position)
+                    }
+                    while (acc < -stepPx && position > 0) {
+                        move(position, position - 1)
+                        position--
+                        acc += stepPx
+                        dragging(position)
+                    }
+                }
+            }
+            .padding(horizontal = 8.dp, vertical = 12.dp),
+    )
+}
+
+/** Color dominante (oscurecido) de una carátula, para el fondo de "Reproduciendo". */
+@Composable
+fun rememberArtworkColor(model: String?): Color? {
+    val context = LocalContext.current
+    var color by remember { mutableStateOf<Color?>(null) }
+    LaunchedEffect(model) {
+        color = if (model.isNullOrBlank()) null else withContext(Dispatchers.IO) {
+            runCatching {
+                val request = ImageRequest.Builder(context).data(model).size(48).allowHardware(false).build()
+                val result = SingletonImageLoader.get(context).execute(request)
+                val bitmap = (result as? SuccessResult)?.image?.toBitmap(48, 48) ?: return@runCatching null
+                dominantColor(bitmap)
+            }.getOrNull()
+        }
+    }
+    return color
+}
+
+private fun dominantColor(bitmap: Bitmap): Color? {
+    val w = bitmap.width
+    val h = bitmap.height
+    if (w <= 0 || h <= 0) return null
+    val pixels = IntArray(w * h)
+    bitmap.getPixels(pixels, 0, w, 0, 0, w, h)
+    var r = 0L
+    var g = 0L
+    var b = 0L
+    var n = 0L
+    val hsv = FloatArray(3)
+    for (p in pixels) {
+        android.graphics.Color.colorToHSV(p, hsv)
+        // Los píxeles con color pesan más que los grises, blancos y negros.
+        val weight = (1 + (hsv[1] * 6).toInt()).toLong()
+        r += android.graphics.Color.red(p) * weight
+        g += android.graphics.Color.green(p) * weight
+        b += android.graphics.Color.blue(p) * weight
+        n += weight
+    }
+    if (n == 0L) return null
+    android.graphics.Color.RGBToHSV((r / n).toInt(), (g / n).toInt(), (b / n).toInt(), hsv)
+    hsv[1] = hsv[1].coerceIn(0.25f, 0.75f)
+    hsv[2] = hsv[2].coerceIn(0.30f, 0.50f)
+    return Color(android.graphics.Color.HSVToColor(hsv))
 }
 
 @Composable

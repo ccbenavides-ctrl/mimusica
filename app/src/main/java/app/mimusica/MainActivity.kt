@@ -10,6 +10,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import app.mimusica.data.local.LocalMusicRepository
 import app.mimusica.data.settings.AppSettings
 import app.mimusica.ui.components.LocalAppContainer
+import app.mimusica.ui.components.LocalAutoArtwork
 import app.mimusica.ui.navigation.MiMusicaRoot
 import app.mimusica.ui.theme.MiMusicaTheme
 
@@ -23,7 +24,10 @@ class MainActivity : ComponentActivity() {
         setContent {
             val settings by container.settings.settings.collectAsStateWithLifecycle(initialValue = AppSettings())
             MiMusicaTheme(themeMode = settings.themeMode, dynamicColor = settings.dynamicColor) {
-                CompositionLocalProvider(LocalAppContainer provides container) {
+                CompositionLocalProvider(
+                    LocalAppContainer provides container,
+                    LocalAutoArtwork provides settings.autoArtwork,
+                ) {
                     MiMusicaRoot()
                 }
             }

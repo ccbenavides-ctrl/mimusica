@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.QueueMusic
 import androidx.compose.material.icons.filled.Explore
+import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.LibraryMusic
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.Icon
@@ -34,6 +35,12 @@ import app.mimusica.ui.screens.ArtistScreen
 import app.mimusica.ui.screens.AutoPlaylistScreen
 import app.mimusica.ui.screens.DiscoverScreen
 import app.mimusica.ui.screens.DownloadsScreen
+import app.mimusica.ui.screens.HomeScreen
+import app.mimusica.ui.screens.PodcastDetailScreen
+import app.mimusica.ui.screens.PodcastsScreen
+import app.mimusica.ui.screens.RadioScreen
+import app.mimusica.ui.screens.SoundScreen
+import app.mimusica.ui.screens.StatsScreen
 import app.mimusica.ui.screens.IaItemScreen
 import app.mimusica.ui.screens.ImportHelpScreen
 import app.mimusica.ui.screens.ImportResultScreen
@@ -47,6 +54,12 @@ import app.mimusica.ui.screens.SearchScreen
 import app.mimusica.ui.screens.SettingsScreen
 
 object Routes {
+    const val HOME = "home"
+    const val RADIO = "radio"
+    const val PODCASTS = "podcasts"
+    const val PODCAST = "podcast/{feed}"
+    const val STATS = "stats"
+    const val SOUND = "sound"
     const val LIBRARY = "library"
     const val DISCOVER = "discover"
     const val PLAYLISTS = "playlists"
@@ -71,11 +84,13 @@ object Routes {
     fun iaItem(identifier: String) = "ia/${Uri.encode(identifier)}"
     fun importResult(id: Long) = "import/$id"
     fun search(q: String) = "search?q=${Uri.encode(q)}"
+    fun podcast(feedUrl: String) = "podcast/${Uri.encode(feedUrl)}"
 }
 
 private data class TopTab(val route: String, val label: String, val icon: ImageVector)
 
 private val tabs = listOf(
+    TopTab(Routes.HOME, "Inicio", Icons.Filled.Home),
     TopTab(Routes.LIBRARY, "Biblioteca", Icons.Filled.LibraryMusic),
     TopTab(Routes.DISCOVER, "Descubrir", Icons.Filled.Explore),
     TopTab(Routes.PLAYLISTS, "Listas", Icons.AutoMirrored.Filled.QueueMusic),
@@ -106,7 +121,7 @@ fun MiMusicaRoot() {
                                 selected = currentBase == tab.route,
                                 onClick = { navController.navigateToTab(tab.route) },
                                 icon = { Icon(tab.icon, contentDescription = null) },
-                                label = { Text(tab.label) },
+                                label = { Text(tab.label, maxLines = 1) },
                             )
                         }
                     }
@@ -116,9 +131,32 @@ fun MiMusicaRoot() {
     ) { padding ->
         NavHost(
             navController = navController,
-            startDestination = Routes.LIBRARY,
+            startDestination = Routes.HOME,
             modifier = Modifier.padding(padding).fillMaxSize(),
         ) {
+            composable(Routes.HOME) {
+                HomeScreen(
+                    onOpenRadio = { navController.navigate(Routes.RADIO) },
+                    onOpenPodcasts = { navController.navigate(Routes.PODCASTS) },
+                    onOpenStats = { navController.navigate(Routes.STATS) },
+                    onOpenDownloads = { navController.navigate(Routes.DOWNLOADS) },
+                    onOpenSettings = { navController.navigate(Routes.SETTINGS) },
+                    onOpenAuto = { navController.navigate(Routes.auto(it)) },
+                    onOpenAlbum = { navController.navigate(Routes.album(it)) },
+                )
+            }
+            composable(Routes.RADIO) { RadioScreen(onBack = { navController.popBackStack() }) }
+            composable(Routes.PODCASTS) {
+                PodcastsScreen(
+                    onBack = { navController.popBackStack() },
+                    onOpenPodcast = { navController.navigate(Routes.podcast(it)) },
+                )
+            }
+            composable(Routes.PODCAST, arguments = listOf(navArgument("feed") { type = NavType.StringType })) { entry ->
+                PodcastDetailScreen(feedUrl = entry.arguments?.getString("feed").orEmpty(), onBack = { navController.popBackStack() })
+            }
+            composable(Routes.STATS) { StatsScreen(onBack = { navController.popBackStack() }) }
+            composable(Routes.SOUND) { SoundScreen(onBack = { navController.popBackStack() }) }
             composable(Routes.LIBRARY) {
                 LibraryScreen(
                     onOpenArtist = { navController.navigate(Routes.artist(it)) },
@@ -182,6 +220,7 @@ fun MiMusicaRoot() {
                 SettingsScreen(
                     onBack = { navController.popBackStack() },
                     onOpenImportHelp = { navController.navigate(Routes.IMPORT_HELP) },
+                    onOpenSound = { navController.navigate(Routes.SOUND) },
                 )
             }
             composable(Routes.IMPORT) {
