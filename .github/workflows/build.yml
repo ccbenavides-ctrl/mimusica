@@ -1,0 +1,51 @@
+name: Compilar APK de MiMúsica
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - name: Descargar el código
+        uses: actions/checkout@v4
+
+      - name: Instalar JDK 21
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "21"
+
+      - name: Instalar Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Instalar plataforma Android 37 y build-tools
+        # Si el nombre del paquete cambia, AGP descarga lo que falte automáticamente.
+        continue-on-error: true
+        run: sdkmanager "platforms;android-37" "build-tools;36.0.0"
+
+      - name: Configurar Gradle
+        uses: gradle/actions/setup-gradle@v5
+
+      - name: Pruebas unitarias y APK debug
+        run: |
+          chmod +x gradlew
+          ./gradlew test assembleDebug --stacktrace
+
+      - name: Publicar el APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: MiMusica-debug-apk
+          path: app/build/outputs/apk/debug/*.apk
+          if-no-files-found: error
+
+      - name: Publicar reportes de pruebas
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: reportes-de-pruebas
+          path: app/build/reports/tests/
+          if-no-files-found: ignore

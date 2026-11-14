@@ -1,0 +1,15 @@
+{"created":1794618426,"d1":"dn601300.us.archive.org","dir":"/0/items/bof024","files":[
+{"name":"00_EugeneKha_-_In_Drone_00_thumb.jpg","source":"original","format":"JPEG Thumb","size":"38012"},
+{"name":"01_EugeneKha_-_In_Drone_-_Cold_Rain_Remastered_2012.flac","source":"original","format":"Flac","length":"1765.23","title":"Cold Rain (Remastered 2012)","track":"01","creator":"EugeneKha","artist":"EugeneKha","album":"In Drone","size":"212994970"},
+{"name":"01_EugeneKha_-_In_Drone_-_Cold_Rain_Remastered_2012.mp3","source":"original","format":"VBR MP3","length":"1765.27","title":"Cold Rain (Remastered 2012)","track":"01/02","creator":"EugeneKha","artist":"EugeneKha","album":"In Drone","size":"34110101"},
+{"name":"01_EugeneKha_-_In_Drone_-_Cold_Rain_Remastered_2012.ogg","source":"original","format":"Ogg Vorbis","length":"1765.23","title":"Cold Rain (Remastered 2012)","track":"01","creator":"EugeneKha","album":"In Drone","size":"35276115"},
+{"name":"02_EugeneKha_-_In_Drone_-_Moscow_Day.flac","source":"original","format":"Flac","length":"1989.75","title":"Moscow Day","track":"02","creator":"EugeneKha","artist":"EugeneKha","album":"In Drone","size":"185734931"},
+{"name":"02_EugeneKha_-_In_Drone_-_Moscow_Day.mp3","source":"original","format":"VBR MP3","length":"1989.79","title":"Moscow Day","track":"02/02","creator":"EugeneKha","artist":"EugeneKha","album":"In Drone","size":"36400032"},
+{"name":"disc 2/03 Bonus Track.flac","source":"original","format":"Flac","length":"3:05","size":"1000"},
+{"name":"04 privado.mp3","source":"original","format":"VBR MP3","length":"100","private":"true"},
+{"name":"__ia_thumb.jpg","source":"original","format":"Item Tile","size":"13526"},
+{"name":"bof024_archive.torrent","source":"metadata","format":"Archive BitTorrent","size":"23905"},
+{"name":"bof024_files.xml","source":"metadata","format":"Metadata","summation":"md5"}
+],"files_count":11,"item_last_updated":1788886248,"item_size":542623309,
+"metadata":{"identifier":"bof024","uploader":"archive.org@kacked.com","addeddate":"2012-05-26 03:42:29","title":"In Drone","creator":"EugeneKha","mediatype":"audio","collection":["buddhistonfire","netlabels"],"description":"Recorded: 2009, 2010, 2012.","date":"2012-05-25","year":"2012","subject":"drone; soundscape","licenseurl":"http://creativecommons.org/licenses/by-nc-nd/3.0/"},
+"server":"dn601300.us.archive.org","workable_servers":["dn601300.us.archive.org"]}
