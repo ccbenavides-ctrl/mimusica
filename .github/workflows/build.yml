@@ -5,6 +5,9 @@ on:
   pull_request:
   workflow_dispatch:
 
+permissions:
+  contents: write
+
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -38,6 +41,15 @@ jobs:
           name: MiMusica-debug-apk
           path: app/build/outputs/apk/debug/*.apk
           if-no-files-found: error
+
+      - name: Publicar APK en Releases (descarga directa desde el celular)
+        if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          cp app/build/outputs/apk/debug/app-debug.apk MiMusica.apk
+          gh release delete ultima --yes --cleanup-tag || true
+          gh release create ultima MiMusica.apk --title "MiMúsica (última versión)" --notes "APK debug compilado desde ${GITHUB_SHA::7}." --prerelease
 
       - name: Publicar reportes de pruebas
         if: always()
