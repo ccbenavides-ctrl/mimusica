@@ -10,9 +10,7 @@ import androidx.datastore.preferences.core.intPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.runBlocking
 
 enum class ThemeMode(val label: String) {
     SYSTEM("Según el sistema"),
@@ -102,8 +100,23 @@ class SettingsRepository(private val context: Context) {
         )
     }
 
-    /** Lectura síncrona (solo al crear el servicio de reproducción). */
-    fun current(): AppSettings = runCatching { runBlocking { settings.first() } }.getOrDefault(AppSettings())
+    /**
+     * Copia rápida (SharedPreferences) de los ajustes que el servicio de reproducción necesita al arrancar.
+     * Nunca se lee DataStore de forma bloqueante en el hilo principal: eso congelaba la app.
+     */
+    private val quick = context.getSharedPreferences("ajustes_rapidos", Context.MODE_PRIVATE)
+
+    fun startupSettings(): AppSettings = AppSettings(
+        streamCacheMb = quick.getInt("stream_cache_mb", AppSettings.DEFAULT_CACHE_MB),
+        castEnabled = quick.getBoolean("cast_enabled", false),
+    )
+
+    /** Mantiene la copia rápida al día (la llama el servicio cada vez que cambian los ajustes). */
+    fun mirrorStartupSettings(s: AppSettings) {
+        if (quick.getInt("stream_cache_mb", -1) != s.streamCacheMb || quick.getBoolean("cast_enabled", false) != s.castEnabled) {
+            quick.edit().putInt("stream_cache_mb", s.streamCacheMb).putBoolean("cast_enabled", s.castEnabled).apply()
+        }
+    }
 
     suspend fun setJamendoClientId(value: String) {
         context.settingsDataStore.edit { it[Keys.jamendo] = value.trim() }
@@ -151,6 +164,7 @@ class SettingsRepository(private val context: Context) {
 
     suspend fun setStreamCacheMb(value: Int) {
         context.settingsDataStore.edit { it[Keys.cacheMb] = value.coerceIn(0, 4096) }
+        quick.edit().putInt("stream_cache_mb", value.coerceIn(0, 4096)).apply()
     }
 
     suspend fun setLyricsEnabled(value: Boolean) {
@@ -163,6 +177,7 @@ class SettingsRepository(private val context: Context) {
 
     suspend fun setCastEnabled(value: Boolean) {
         context.settingsDataStore.edit { it[Keys.cast] = value }
+        quick.edit().putBoolean("cast_enabled", value).apply()
     }
 
     suspend fun setRadioCountry(value: String) {

@@ -86,16 +86,15 @@ class PlaybackService : MediaLibraryService() {
         container = (application as MiMusicaApp).container
         queueStore = QueueStore(this)
         browser = AutoBrowser(container)
-        // Los ajustes se leen una vez de forma síncrona (archivo pequeño) para crear el reproductor.
-        settings = container.settings.current()
+        // Al arrancar solo se usan los ajustes de la copia rápida (sin bloquear el hilo principal);
+        // el resto llega enseguida desde DataStore en applySettings().
+        settings = container.settings.startupSettings()
 
         exo = buildExoPlayer()
         sessionPlayer = CastSupport.wrapIfEnabled(this, exo, settings.castEnabled).also {
             container.extras.castActive.value = it !== exo
         }
         container.extras.effects.attach(exo.audioSessionId)
-        applySettings(settings)
-
         sessionPlayer.addListener(playerListener)
         exo.addListener(exoListener)
 
@@ -148,6 +147,7 @@ class PlaybackService : MediaLibraryService() {
     }
 
     private fun applySettings(s: AppSettings) {
+        container.settings.mirrorStartupSettings(s)
         val speedChanged = s.playbackSpeed != settings.playbackSpeed || lastVolume < 0f
         settings = s
         container.extras.effects.configure(s.eqEnabled, s.eqPreset, s.bassBoost)
