@@ -12,8 +12,19 @@ android {
         applicationId = "app.mimusica"
         minSdk = 26
         targetSdk = 37
-        versionCode = 2
-        versionName = "2.0.0"
+        versionCode = 3
+        versionName = "2.0.1"
+    }
+
+    // Clave fija para las versiones de prueba: así cada APK nuevo se instala encima del anterior
+    // sin desinstalar (y sin perder listas ni favoritos). No sirve para publicar en Google Play.
+    signingConfigs {
+        getByName("debug") {
+            storeFile = file("mimusica-pruebas.keystore")
+            storePassword = "mimusica"
+            keyAlias = "mimusica"
+            keyPassword = "mimusica"
+        }
     }
 
     buildTypes {
