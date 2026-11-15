@@ -36,7 +36,19 @@ adb shell input keyevent KEYCODE_BACK; sleep 3
 tap "Biblioteca"; sleep 4
 show "Biblioteca"
 tap "Descubrir"; sleep 6
-show "Descubrir"; anr "final"
+show "Descubrir"
+tap "Buscar"; sleep 3
+adb shell input tap 540 330; sleep 1
+adb shell input text "Juanes"; adb shell input keyevent KEYCODE_ENTER; sleep 6
+show "Buscar Juanes"
+tap "Spotify"; sleep 8
+echo "===== App en primer plano tras tocar Spotify ====="
+adb shell dumpsys activity activities | grep -E "topResumedActivity|mResumedActivity" | head -3
+adb shell input keyevent KEYCODE_BACK; sleep 3
+echo "===== Nombre de la app ====="
+adb shell dumpsys package app.mimusica | grep -E "versionName" | head -2
+adb shell cmd package resolve-activity --brief -c android.intent.category.LAUNCHER app.mimusica | tail -1
+anr "final"
 adb root >/dev/null 2>&1; sleep 3
 for f in $(adb shell ls /data/anr/ 2>/dev/null); do
   echo "--- traza $f"; adb shell cat /data/anr/$f | awk '/"main"/{p=1} p{print} /^$/{if(p) exit}' | head -40

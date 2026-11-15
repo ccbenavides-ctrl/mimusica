@@ -2,7 +2,7 @@ name: Probar en emulador
 
 on:
   push:
-    branches: [diagnostico]
+    branches: [diagnostico, busqueda-s]
   workflow_dispatch:
 
 jobs:
