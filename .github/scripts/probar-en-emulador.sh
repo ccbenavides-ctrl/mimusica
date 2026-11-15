@@ -12,12 +12,19 @@ tap() {
 }
 anr() { echo "===== ANR / CRASH ($1) ====="; adb logcat -d | grep -E "ANR in|FATAL EXCEPTION|E AndroidRuntime" -A 12 | head -60; }
 
+# Pantalla parecida a la del celular de Camilo (1080x2400) con letra grande.
+adb shell wm size 1080x2400
+adb shell wm density 440
+adb shell settings put system font_scale 1.15
 adb install -r app/build/outputs/apk/debug/app-debug.apk
 adb logcat -c
 adb shell am start -W -n $PKG/.MainActivity
 sleep 15
 show "Inicio sin permisos"; anr "arranque"
-tap "Dar permiso"; sleep 4
+echo "===== Elementos de la parte de arriba (para revisar recortes) ====="
+dump | tr '>' '\n' | grep -o 'bounds="\[[0-9]*,[0-9]*\]\[[0-9]*,[0-9]*\]"' | awk -F'[][,"]' '$4 < 500' | sort -u | head -40
+adb shell screencap -p /sdcard/inicio.png
+tap "Dar permiso" || { adb shell input swipe 540 1700 540 700 400; sleep 2; tap "Dar permiso"; }; sleep 4
 show "Diálogo de permisos"
 tap "Allow" || tap "Permitir"; sleep 3
 show "Segundo diálogo"
