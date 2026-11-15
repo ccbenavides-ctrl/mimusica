@@ -24,8 +24,8 @@ show "Inicio sin permisos"; anr "arranque"
 echo "===== Elementos de la parte de arriba (para revisar recortes) ====="
 dump | tr '>' '\n' | grep -o 'bounds="\[[0-9]*,[0-9]*\]\[[0-9]*,[0-9]*\]"' | awk -F'[][,"]' '$4 < 500' | sort -u | head -40
 adb shell screencap -p /sdcard/inicio.png
-tap "Dar permiso" || { adb shell input swipe 540 1700 540 700 400; sleep 2; tap "Dar permiso"; }; sleep 4
-show "Diálogo de permisos"
+tap "Dar permiso" || { adb shell input swipe 540 1450 540 650 600; sleep 2; tap "Dar permiso"; }; sleep 4
+show "Diálogo de permisos"; dump | tr '>' '\n' | grep -oE 'text="[^"]*(llow|ermit)[^"]*"' | head
 tap "Allow" || tap "Permitir"; sleep 3
 show "Segundo diálogo"
 tap "Allow" || tap "Permitir"; sleep 6
