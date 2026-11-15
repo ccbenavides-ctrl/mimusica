@@ -53,7 +53,7 @@ jobs:
         run: |
           cp app/build/outputs/apk/debug/app-debug.apk MiMusica.apk
           gh release delete ultima --yes --cleanup-tag || true
-          gh release create ultima MiMusica.apk --title "MiMúsica (última versión)" --notes "APK debug compilado desde ${GITHUB_SHA::7}." --prerelease
+          gh release create ultima MiMusica.apk --title "S (última versión)" --notes "APK debug compilado desde ${GITHUB_SHA::7}." --prerelease
 
       - name: Publicar reportes de pruebas
         if: always()

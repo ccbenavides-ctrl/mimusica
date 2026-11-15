@@ -62,6 +62,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import app.mimusica.data.db.ImportedTrackEntity
 import app.mimusica.domain.importer.PlaylistTextParser
 import app.mimusica.domain.model.Track
+import app.mimusica.ui.components.FindElsewhereSheet
 import app.mimusica.ui.components.EmptyState
 import app.mimusica.ui.components.LoadingState
 import app.mimusica.ui.components.LocalAppContainer
@@ -143,7 +144,7 @@ fun ImportScreen(onBack: () -> Unit, onOpenResult: (Long) -> Unit, onOpenHelp: (
                         Text("Solo se importan los nombres", style = MaterialTheme.typography.titleMedium)
                         Spacer(Modifier.height(4.dp))
                         Text(
-                            "MiMúsica lee la lista de canciones (título, artista, álbum) y la cruza con la música de tu " +
+                            "S lee la lista de canciones (título, artista, álbum) y la cruza con la música de tu " +
                                 "teléfono. Las que no tengas las puedes buscar en fuentes gratuitas y legales. " +
                                 "Las descargas de Spotify están cifradas y no se pueden usar fuera de Spotify.",
                             style = MaterialTheme.typography.bodySmall,
@@ -229,6 +230,7 @@ private enum class ImportFilter(val label: String) { ALL("Todas"), HAVE("Ya la t
 @Composable
 fun ImportResultScreen(importId: Long, onBack: () -> Unit, onSearch: (String) -> Unit, onOpenPlaylist: (Long) -> Unit) {
     val container = LocalAppContainer.current
+    var elsewhere by remember { mutableStateOf<Pair<String, String>?>(null) }
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
     val playlist by remember(importId) { container.library.importedPlaylist(importId) }.collectAsStateWithLifecycle(initialValue = null)
@@ -328,16 +330,20 @@ fun ImportResultScreen(importId: Long, onBack: () -> Unit, onSearch: (String) ->
                         if (t != null) {
                             IconButton(onClick = { container.trackActions.play(listOf(t)) }) { Icon(Icons.Filled.PlayArrow, "Reproducir") }
                         } else {
-                            TextButton(onClick = { onSearch(listOf(r.artist.substringBefore(','), r.title).filter { it.isNotBlank() }.joinToString(" ")) }) {
-                                Text("Buscar en\nfuentes gratuitas")
+                            TextButton(onClick = { elsewhere = r.title to r.artist }) {
+                                Text("Escuchar\no comprar")
                             }
                         }
                     },
-                    modifier = if (t != null) Modifier.clickable { container.trackActions.play(listOf(t)) } else Modifier,
+                    modifier = if (t != null) Modifier.clickable { container.trackActions.play(listOf(t)) }
+                    else Modifier.clickable { onSearch(listOf(r.artist.substringBefore(','), r.title).filter { it.isNotBlank() }.joinToString(" ")) },
                 )
             }
             item { Spacer(Modifier.height(24.dp)) }
         }
+    }
+    elsewhere?.let { (title, artist) ->
+        FindElsewhereSheet(title, artist, onDismiss = { elsewhere = null })
     }
 }
 
@@ -360,7 +366,7 @@ fun ImportHelpScreen(onBack: () -> Unit) {
                 "Opción 1: Exportify (archivo CSV)",
                 "1. En el navegador, abre exportify.net e inicia sesión con tu cuenta de Spotify.\n" +
                     "2. Pulsa «Export» junto a la playlist que quieras. Se descarga un archivo .csv.\n" +
-                    "3. En MiMúsica: Biblioteca › ícono de importar (o Listas › ⋮ › Importar playlist de Spotify) › " +
+                    "3. En S: Biblioteca › ícono de importar (o Listas › ⋮ › Importar playlist de Spotify) › " +
                     "«Elegir archivo CSV» y selecciona el archivo descargado.\n" +
                     "Se usan las columnas «Track Name», «Artist Name(s)» y «Album Name».",
             )
@@ -372,17 +378,18 @@ fun ImportHelpScreen(onBack: () -> Unit) {
                     "copiarlas (Ctrl+C) y pegarlas en un editor de texto para obtener los nombres.",
             )
             section(
-                "¿Qué hace MiMúsica con la lista?",
+                "¿Qué hace S con la lista?",
                 "Compara cada nombre con la música de tu teléfono (ignorando mayúsculas, tildes, «Remastered», «feat.», etc.). " +
                     "Las que ya tienes se pueden reproducir o convertir en una lista. Para las que no tienes, el botón " +
-                    "«Buscar en fuentes gratuitas» busca en Internet Archive y Jamendo, que solo tienen música con licencia libre. " +
+                    "En las canciones que no tienes, «Escuchar o comprar» abre Spotify, YouTube Music o una tienda para comprar el MP3; " +
+                "tocar la fila busca en Internet Archive y Jamendo, que solo tienen música con licencia libre. " +
                     "Muchas canciones comerciales no estarán allí: es normal.",
             )
             section(
                 "¿Por qué no puedo usar las canciones que descargué en Spotify?",
                 "Las descargas «sin conexión» de Spotify están cifradas con DRM y solo la app de Spotify puede reproducirlas " +
                     "mientras tengas la suscripción activa. No son archivos MP3 y la ley de derechos de autor no permite " +
-                    "descifrarlas ni copiarlas. Por eso MiMúsica nunca las lee ni intenta descargarlas: solo importa los nombres.",
+                    "descifrarlas ni copiarlas. Por eso S nunca las lee ni intenta descargarlas: solo importa los nombres.",
             )
             section(
                 "Música que sí puedes tener en tu teléfono",

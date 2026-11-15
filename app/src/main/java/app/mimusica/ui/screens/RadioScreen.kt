@@ -97,7 +97,11 @@ class RadioViewModel(private val c: AppContainer) : ViewModel() {
                 val q = s.query.trim().takeIf { it.isNotBlank() }
                 val stations = when {
                     // Una búsqueda por nombre busca en todo el mundo.
-                    q != null -> c.radio.stations(name = q)
+                    q != null -> {
+                        val byName = c.radio.stations(name = q)
+                        val byTag = runCatching { c.radio.stations(tag = q.lowercase()) }.getOrDefault(emptyList())
+                        (byName + byTag).distinctBy { it.key }
+                    }
                     s.mode == RadioMode.WORLD -> c.radio.stations()
                     s.mode == RadioMode.TAG -> c.radio.stations(tag = s.tag)
                     else -> c.radio.stations(countryCode = s.country)
@@ -132,7 +136,7 @@ fun RadioScreen(onBack: () -> Unit) {
                     SearchField(
                         value = ui.query,
                         onValueChange = vm::setQuery,
-                        placeholder = "Buscar una emisora por nombre",
+                        placeholder = "Emisora o género (salsa, vallenato, rock…)",
                         onSearch = { vm.load() },
                     )
                     Row(

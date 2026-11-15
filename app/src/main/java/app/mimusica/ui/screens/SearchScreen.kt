@@ -37,6 +37,7 @@ import app.mimusica.domain.matching.TextNormalizer
 import app.mimusica.domain.model.AlbumSummary
 import app.mimusica.domain.model.ArtistSummary
 import app.mimusica.domain.model.Track
+import app.mimusica.ui.components.FindElsewhereRow
 import app.mimusica.ui.components.Artwork
 import app.mimusica.ui.components.EmptyState
 import app.mimusica.ui.components.LoadingState
@@ -159,11 +160,15 @@ fun SearchScreen(
                     EmptyState(
                         Icons.Filled.Search,
                         "Busca en todas partes",
-                        "Un solo buscador para la música de tu teléfono, Internet Archive y Jamendo.",
+                        "Un solo buscador: tu música, la gratuita de Internet Archive y Jamendo, y cualquier canción en Spotify, YouTube Music o tiendas para comprarla.",
                     )
                 }
                 return@LazyColumn
             }
+
+            // ---- Escucharla o comprarla en otros servicios ----
+            item { SectionHeader("Música de cualquier artista") }
+            item { FindElsewhereRow(query.trim()) }
 
             // ---- En mi teléfono ----
             item { SectionHeader("En mi teléfono") }

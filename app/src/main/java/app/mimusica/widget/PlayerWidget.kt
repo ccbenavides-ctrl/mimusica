@@ -48,7 +48,7 @@ class PlayerWidget : AppWidgetProvider() {
 
         private fun buildViews(context: Context, title: String?, artist: String?, isPlaying: Boolean): RemoteViews {
             val views = RemoteViews(context.packageName, R.layout.widget_player)
-            views.setTextViewText(R.id.widget_title, title?.takeIf { it.isNotBlank() } ?: "MiMúsica")
+            views.setTextViewText(R.id.widget_title, title?.takeIf { it.isNotBlank() } ?: "S")
             views.setTextViewText(R.id.widget_artist, artist?.takeIf { it.isNotBlank() } ?: "Toca para abrir")
             views.setImageViewResource(R.id.widget_play, if (isPlaying) R.drawable.ic_widget_pause else R.drawable.ic_widget_play)
             views.setContentDescription(R.id.widget_play, if (isPlaying) "Pausar" else "Reproducir")

@@ -97,7 +97,7 @@ fun EditTrackDialog(track: Track, onDismiss: () -> Unit) {
                     }
                 }
                 Text(
-                    "Los cambios se guardan en MiMúsica; el archivo de audio no se modifica.",
+                    "Los cambios se guardan en S; el archivo de audio no se modifica.",
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     modifier = Modifier.padding(top = 4.dp),

@@ -1,10 +1,21 @@
-# MiMúsica
+# S
 
 Reproductor de música personal para Android. Une en una sola app:
 
 - **Tu música local**: todas las canciones guardadas en el teléfono (MP3, FLAC, M4A, OGG, WAV), por canción, artista y álbum.
 - **Música nueva gratuita y legal**: streaming y descarga desde **Internet Archive** (sin clave) y **Jamendo** (clave gratuita).
 - **Tus playlists de Spotify como lista de nombres**: se importan (CSV o texto) y se cruzan con lo que ya tienes.
+
+### Novedades de la versión 2.1
+
+- La app ahora se llama **S**, con ícono nuevo.
+- **Música de cualquier artista**: en Buscar, en el menú ⋮ de cada canción y en las canciones que faltan de tus
+  playlists de Spotify aparecen botones para **escucharla** en Spotify, YouTube Music, YouTube, Deezer o Amazon Music
+  (se abre su app con la canción ya buscada) o para **comprarla** en Bandcamp, Amazon u otras tiendas.
+  Lo que compres como MP3 y descargues al teléfono aparece solo en la Biblioteca.
+- La radio en vivo también busca por género (salsa, vallenato, rock…).
+
+S no descarga ni reproduce música de Spotify, YouTube ni sitios de descarga: solo abre esos servicios.
 
 ### Novedades de la versión 2.0
 

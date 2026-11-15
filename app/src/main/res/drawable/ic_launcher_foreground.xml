@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Ícono original de MiMúsica: una "M" trazada como onda de sonido con un punto de acento. -->
+<!-- Ícono original de S: la letra "S" trazada como una onda de sonido. -->
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
     android:width="108dp"
     android:height="108dp"
@@ -8,17 +8,8 @@
     <path
         android:fillColor="#00000000"
         android:strokeColor="@color/icon_foreground"
-        android:strokeWidth="7"
+        android:strokeWidth="9"
         android:strokeLineCap="round"
         android:strokeLineJoin="round"
-        android:pathData="M33,70 L33,40 L44,40 L54,58 L64,40 L75,40 L75,70" />
-    <path
-        android:fillColor="#00000000"
-        android:strokeColor="@color/icon_foreground"
-        android:strokeWidth="4"
-        android:strokeLineCap="round"
-        android:pathData="M44,52 L44,70 M64,52 L64,70" />
-    <path
-        android:fillColor="@color/icon_accent"
-        android:pathData="M54,74 m-5,0 a5,5 0 1,0 10,0 a5,5 0 1,0 -10,0" />
+        android:pathData="M71,39 C67,33.5 61,31 54,31 C44.5,31 37.5,36 37.5,43.5 C37.5,51 44,53.5 54,56 C64,58.5 70.5,61.5 70.5,69 C70.5,76.5 63.5,81 54,81 C46,81 40,78 36,72" />
 </vector>

@@ -78,8 +78,8 @@ object BackupCodec {
 
     fun decode(text: String): BackupData {
         val root = runCatching { Json.parseToJsonElement(text) as? JsonObject }.getOrNull()
-            ?: throw IllegalArgumentException("El archivo no es una copia de seguridad de MiMúsica.")
-        if (root.str("app") != "MiMusica") throw IllegalArgumentException("El archivo no es una copia de seguridad de MiMúsica.")
+            ?: throw IllegalArgumentException("El archivo no es una copia de seguridad de S.")
+        if (root.str("app") != "MiMusica") throw IllegalArgumentException("El archivo no es una copia de seguridad de S.")
         val tracks = (root["tracks"] as? JsonObject).orEmpty()
             .mapNotNull { (key, el) -> (el as? JsonObject)?.let { TrackJson.fromJson(it) }?.let { key to it } }
             .toMap()

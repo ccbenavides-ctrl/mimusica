@@ -91,7 +91,7 @@ fun PermissionScreen(modifier: Modifier = Modifier) {
         Text("Tu música, en un solo lugar", style = MaterialTheme.typography.headlineSmall, textAlign = TextAlign.Center)
         Spacer(Modifier.height(12.dp))
         Text(
-            "Para mostrar las canciones que tienes en el teléfono, MiMúsica necesita permiso para leer " +
+            "Para mostrar las canciones que tienes en el teléfono, S necesita permiso para leer " +
                 "tus archivos de audio. Solo se leen en el dispositivo: nada se sube a internet.\n\n" +
                 "También te pedirá permiso de notificaciones para mostrar los controles de reproducción " +
                 "y el progreso de las descargas (opcional).",
@@ -101,7 +101,7 @@ fun PermissionScreen(modifier: Modifier = Modifier) {
         Spacer(Modifier.height(24.dp))
         if (permanentlyDenied) {
             Text(
-                "El permiso fue denegado. Actívalo en Ajustes del sistema › Aplicaciones › MiMúsica › Permisos › Música y audio.",
+                "El permiso fue denegado. Actívalo en Ajustes del sistema › Aplicaciones › S › Permisos › Música y audio.",
                 textAlign = TextAlign.Center,
                 color = MaterialTheme.colorScheme.error,
             )

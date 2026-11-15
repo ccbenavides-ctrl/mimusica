@@ -377,7 +377,7 @@ fun JamendoKeyHelp(onOpenSettings: () -> Unit, modifier: Modifier = Modifier) {
                     "Jamendo tiene miles de canciones independientes con licencia Creative Commons. " +
                         "Para usarlo necesitas un «client_id» gratuito:\n\n" +
                         "1. Entra a devportal.jamendo.com y crea una cuenta.\n" +
-                        "2. Crea una aplicación (por ejemplo «MiMúsica personal»).\n" +
+                        "2. Crea una aplicación (por ejemplo «S personal»).\n" +
                         "3. Copia el «Client ID» que te muestran.\n" +
                         "4. Pégalo en Ajustes › Jamendo.",
                     style = MaterialTheme.typography.bodyMedium,

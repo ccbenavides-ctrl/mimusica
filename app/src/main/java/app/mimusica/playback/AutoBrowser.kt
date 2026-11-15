@@ -68,7 +68,7 @@ class AutoBrowser(private val container: AppContainer) {
 
     suspend fun item(mediaId: String): MediaItem? = when {
         mediaId == ROOT -> rootItem()
-        mediaId.startsWith("nodo:") -> folder(mediaId, "MiMúsica")
+        mediaId.startsWith("nodo:") -> folder(mediaId, "S")
         else -> findTrack(mediaId)?.let { MediaItemMapper.toMediaItem(it) }
     }
 
@@ -96,7 +96,7 @@ class AutoBrowser(private val container: AppContainer) {
         private const val ARTIST_PREFIX = "nodo:artista:"
         private const val MAX_ITEMS = 300
 
-        fun rootItem(): MediaItem = folder(ROOT, "MiMúsica")
+        fun rootItem(): MediaItem = folder(ROOT, "S")
 
         private fun folder(
             id: String,

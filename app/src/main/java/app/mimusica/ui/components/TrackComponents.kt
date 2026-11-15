@@ -25,6 +25,7 @@ import androidx.compose.material.icons.filled.FavoriteBorder
 import androidx.compose.material.icons.filled.GraphicEq
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.automirrored.filled.OpenInNew
 import androidx.compose.material.icons.filled.Radio
 import androidx.compose.material.icons.filled.SkipNext
 import androidx.compose.material3.AlertDialog
@@ -144,6 +145,7 @@ fun TrackMenuButton(
     var expanded by remember { mutableStateOf(false) }
     var showPlaylistDialog by remember { mutableStateOf(false) }
     var showEditDialog by remember { mutableStateOf(false) }
+    var showElsewhere by remember { mutableStateOf(false) }
     val isFavorite = track.key in favorites
     val downloadStatus = downloads[track.key]?.status
 
@@ -190,6 +192,13 @@ fun TrackMenuButton(
                 },
             )
         }
+        if (!track.isLive && !track.isPodcast) {
+            DropdownMenuItem(
+                text = { Text("Escuchar o comprar en otros servicios…") },
+                leadingIcon = { Icon(Icons.AutoMirrored.Filled.OpenInNew, null) },
+                onClick = { expanded = false; showElsewhere = true },
+            )
+        }
         if (!track.isOnline) {
             DropdownMenuItem(
                 text = { Text("Editar datos y carátula…") },
@@ -224,6 +233,9 @@ fun TrackMenuButton(
     }
     if (showEditDialog) {
         EditTrackDialog(track = track, onDismiss = { showEditDialog = false })
+    }
+    if (showElsewhere) {
+        FindElsewhereSheet(track.title, track.artist, onDismiss = { showElsewhere = false })
     }
 }
 

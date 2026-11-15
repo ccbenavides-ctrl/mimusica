@@ -248,7 +248,7 @@ fun SettingsScreen(onBack: () -> Unit, onOpenImportHelp: () -> Unit, onOpenSound
             SectionHeader("Acerca de")
             Column(Modifier.padding(horizontal = 16.dp)) {
                 Text(
-                    "MiMúsica reproduce la música guardada en tu teléfono y música gratuita y legal de " +
+                    "S reproduce la música guardada en tu teléfono y música gratuita y legal de " +
                         "Internet Archive y Jamendo (licencias Creative Commons, dominio público o permiso del artista), " +
                         "además de radio en vivo (Radio Browser) y podcasts públicos.\n\n" +
                         "No accede a las descargas de Spotify ni descarga audio de Spotify, YouTube u otras fuentes " +
