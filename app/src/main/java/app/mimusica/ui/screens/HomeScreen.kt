@@ -92,22 +92,16 @@ fun HomeScreen(
             )
         },
     ) { padding ->
+        if (!lib.hasPermission) {
+            // Primera vez: pedir permiso para leer la música del teléfono (la radio y los podcasts ya se pueden usar).
+            Column(Modifier.padding(padding).fillMaxSize()) {
+                QuickTiles(onOpenRadio, onOpenPodcasts, onOpenStats)
+                PermissionScreen(Modifier.weight(1f))
+            }
+            return@Scaffold
+        }
         LazyColumn(Modifier.padding(padding).fillMaxSize(), contentPadding = PaddingValues(bottom = 24.dp)) {
-            item {
-                Row(
-                    Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 4.dp),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp),
-                ) {
-                    QuickTile("Radio en vivo", Icons.Filled.Radio, onOpenRadio, Modifier.weight(1f))
-                    QuickTile("Podcasts", Icons.Filled.Podcasts, onOpenPodcasts, Modifier.weight(1f))
-                    QuickTile("Tu resumen", Icons.Filled.BarChart, onOpenStats, Modifier.weight(1f))
-                }
-            }
-
-            if (!lib.hasPermission) {
-                // Primera vez: pedir permiso para leer la música del teléfono.
-                item { PermissionScreen() }
-            }
+            item { QuickTiles(onOpenRadio, onOpenPodcasts, onOpenStats) }
 
             if (lib.tracks.isNotEmpty()) {
                 item {
@@ -168,6 +162,18 @@ private fun greeting(): String = when (Calendar.getInstance().get(Calendar.HOUR_
     in 5..11 -> "Buenos días"
     in 12..18 -> "Buenas tardes"
     else -> "Buenas noches"
+}
+
+@Composable
+private fun QuickTiles(onOpenRadio: () -> Unit, onOpenPodcasts: () -> Unit, onOpenStats: () -> Unit) {
+    Row(
+        Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 4.dp),
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
+    ) {
+        QuickTile("Radio en vivo", Icons.Filled.Radio, onOpenRadio, Modifier.weight(1f))
+        QuickTile("Podcasts", Icons.Filled.Podcasts, onOpenPodcasts, Modifier.weight(1f))
+        QuickTile("Tu resumen", Icons.Filled.BarChart, onOpenStats, Modifier.weight(1f))
+    }
 }
 
 @Composable

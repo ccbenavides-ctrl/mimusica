@@ -34,7 +34,7 @@ object PodcastSearchParser {
                 author = o.text("artistName").orEmpty(),
                 artworkUrl = o.text("artworkUrl600") ?: o.text("artworkUrl100"),
             )
-        }
+        }.distinctBy { it.feedUrl }
     }
 }
 

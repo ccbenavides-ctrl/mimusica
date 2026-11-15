@@ -424,7 +424,7 @@ fun NowPlayingScreen(onBack: () -> Unit) {
             onDismissRequest = { showSpeed = false },
             title = { Text("Velocidad") },
             text = {
-                Column {
+                Column(Modifier.verticalScroll(rememberScrollState())) {
                     listOf(0.5f, 0.75f, 1f, 1.25f, 1.5f, 2f).forEach { speed ->
                         ListItem(
                             headlineContent = { Text(if (speed == 1f) "Normal" else speedLabel(speed)) },
@@ -468,7 +468,7 @@ private fun SleepTimerDialog(sleep: SleepState, onDismiss: () -> Unit) {
         onDismissRequest = onDismiss,
         title = { Text("Temporizador de apagado") },
         text = {
-            Column {
+            Column(Modifier.verticalScroll(rememberScrollState())) {
                 Text(
                     when {
                         sleep.endOfTrack -> "La música se pausará al terminar esta canción."

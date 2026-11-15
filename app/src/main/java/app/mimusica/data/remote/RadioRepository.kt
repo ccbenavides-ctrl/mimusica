@@ -21,7 +21,7 @@ object RadioParser {
             val url = (o.text("url_resolved") ?: o.text("url"))?.trim() ?: return@mapNotNull null
             if (!url.startsWith("http://") && !url.startsWith("https://")) return@mapNotNull null
             val name = o.text("name")?.trim()?.takeIf { it.isNotBlank() } ?: return@mapNotNull null
-            if (!seen.add(url)) return@mapNotNull null
+            if (!seen.add(url) || !seen.add("id:$uuid")) return@mapNotNull null
             val tags = o.text("tags").orEmpty().split(',').map { it.trim() }.filter { it.isNotBlank() }.take(2)
             val details = (listOfNotNull(o.text("country")) + tags).joinToString(" · ")
             Track(

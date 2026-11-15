@@ -40,6 +40,13 @@ android {
     }
 }
 
+// Muestra en el registro de compilación cada prueba ejecutada y su resultado.
+tasks.withType<Test>().configureEach {
+    testLogging {
+        events("passed", "failed", "skipped")
+    }
+}
+
 ksp {
     arg("room.generateKotlin", "true")
     arg("room.schemaLocation", "$projectDir/schemas")

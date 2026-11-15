@@ -74,7 +74,7 @@ object RssParser {
             author = author,
             description = cleanText(channel.childText("description").orEmpty()).take(800),
             imageUrl = channelImage,
-            episodes = episodes,
+            episodes = episodes.distinctBy { it.id },
         )
     }
 
